@@ -36,7 +36,7 @@ $.fn.numeric = function(config, callback)
 {
 	if(typeof config === 'boolean')
 	{
-		config = { decimal: config, negative: true, decimalPlaces: -1 };
+		config = { decimal: config, negative: true, decimalPlaces: -1, allowDecimal: true };
 	}
 	config = config || {};
 	// if config.negative undefined, set to true (default is to allow negative numbers)
@@ -45,12 +45,14 @@ $.fn.numeric = function(config, callback)
 	var decimal = (config.decimal === false) ? "" : config.decimal || ".";
 	// allow negatives
 	var negative = (config.negative === true) ? true : false;
-    // set decimal places
+        // set decimal places
 	var decimalPlaces = (typeof config.decimalPlaces == "undefined") ? -1 : config.decimalPlaces;
+	// allow Decimals
+	var allowDecimal = (typeof config.allowDecimal == "undefined") ? true : config.allowDecimal;
 	// callback function
 	callback = (typeof(callback) == "function" ? callback : function() {});
 	// set data and methods
-	return this.data("numeric.decimal", decimal).data("numeric.negative", negative).data("numeric.callback", callback).data("numeric.decimalPlaces", decimalPlaces).keypress($.fn.numeric.keypress).keyup($.fn.numeric.keyup).blur($.fn.numeric.blur);
+	return this.data("numeric.decimal", decimal).data("numeric.negative", negative).data("numeric.callback", callback).data("numeric.decimalPlaces", decimalPlaces).data("numeric.allowDecimal", allowDecimal).keypress($.fn.numeric.keypress).keyup($.fn.numeric.keyup).blur($.fn.numeric.blur);
 };
 
 $.fn.numeric.keypress = function(e)
@@ -58,7 +60,8 @@ $.fn.numeric.keypress = function(e)
 	// get decimal character and determine if negatives are allowed
 	var decimal = $.data(this, "numeric.decimal");
 	var negative = $.data(this, "numeric.negative");
-    var decimalPlaces = $.data(this, "numeric.decimalPlaces");
+        var decimalPlaces = $.data(this, "numeric.decimalPlaces");
+	var allowDecimal = $.data(this, "numeric.allowDecimal");
 	// get the key that was pressed
 	var key = e.charCode ? e.charCode : e.keyCode ? e.keyCode : 0;
 	// allow enter/return key (only when in an input box)
@@ -150,13 +153,13 @@ $.fn.numeric.keypress = function(e)
         // remove extra decimal places
  		if(decimal && decimalPlaces > 0)
  		{
-            var selectionStart = $.fn.getSelectionStart(this);
-            var selectionEnd = $.fn.getSelectionEnd(this);
-            var dot = $.inArray(decimal, $(this).val().split(''));
-            if (selectionStart === selectionEnd && dot >= 0 && selectionStart > dot && $(this).val().length > dot + decimalPlaces) {
-                allow = false;
-            }
-        }
+                    var selectionStart = $.fn.getSelectionStart(this);
+                    var selectionEnd = $.fn.getSelectionEnd(this);
+                    var dot = $.inArray(decimal, $(this).val().split(''));
+                    if (selectionStart === selectionEnd && dot >= 0 && selectionStart > dot && $(this).val().length > dot + decimalPlaces) {
+                       allow = false;
+                    }
+                }
 
 	}
 	return allow;
@@ -173,10 +176,11 @@ $.fn.numeric.keyup = function(e)
 		// get decimal character and determine if negatives are allowed
 		var decimal = $.data(this, "numeric.decimal");
 		var negative = $.data(this, "numeric.negative");
-        var decimalPlaces = $.data(this, "numeric.decimalPlaces");
+                var decimalPlaces = $.data(this, "numeric.decimalPlaces");
+		var allowDecimal = $.data(this, "numeric.allowDecimal");
 
 		// prepend a 0 if necessary
-		if(decimal !== "" && decimal !== null)
+		if((decimal !== "" && decimal !== null) && allowDecimal === true)
 		{
 			// find decimal point
 			var dot = $.inArray(decimal, val.split(''));
@@ -198,7 +202,11 @@ $.fn.numeric.keyup = function(e)
 		}
 
 		// if pasted in, only allow the following characters
-		var validChars = [0,1,2,3,4,5,6,7,8,9,'-',decimal];
+		if (allowDecimal === true) {
+		   var validChars = [0,1,2,3,4,5,6,7,8,9,'-',decimal];
+		} else {
+		   validChars = [0,1,2,3,4,5,6,7,8,9,'-']; 	
+		}
 		// get length of the value (to loop through)
 		var length = val.length;
 		// loop backwards (to prevent going out of bounds)
